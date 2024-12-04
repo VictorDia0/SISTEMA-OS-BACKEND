@@ -13,24 +13,23 @@ return new class extends Migration
     {
         Schema::create('employees', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->uuid('user_id');
             $table->string('name', 20)->nullable();
             $table->string('surname', 100)->nullable();
             $table->string('RG', 15)->unique()->nullable();
             $table->string('CPF', 11)->unique()->nullable();
-            $table->string('telefone', 20)->nullable();
-            $table->string('celular', 20)->nullable();
+            $table->string('phone_number', 20)->nullable();
             $table->string('email', 255)->unique();
             $table->string('password');
             $table->string('CEP', 8);
-            $table->string('rua', 100);
-            $table->string('numero', 10);
-            $table->string('bairro', 50);
-            $table->char('estado', 2);
-            $table->enum('situacao', ['Ativo', 'Inativo'])->default('Ativo');
-            $table->enum('permissao', ['admin', 'tecnico', 'secretario'])->default('tecnico');
+            $table->string('road', 100);
+            $table->string('number', 10);
+            $table->string('neighborhood', 50);
+            $table->char('state', 2);
+            $table->enum('role', ['admin', 'manager', 'staff']); // Níveis de acesso
+            $table->enum('status', ['active', 'inactive'])->default('Ativo');
+            $table->timestamps();
         });
-
-
     }
 
     /**
@@ -39,6 +38,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('employees');
-
     }
 };

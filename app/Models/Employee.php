@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-class Employees extends Model
+class Employee extends Model
 {
     public $incrementing = false; // Desativa auto-incremento
     protected $keyType = 'string'; // Define o tipo da chave primária como string
@@ -32,22 +32,11 @@ class Employees extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'Name',
-        'Surname',
-        'RG',
-        'CPF',
-        'telefone',
-        'celular',
-        'email',
-        'password',
-        'CEP',
-        'rua',
-        'numero',
-        'bairro',
-        'estado',
-        'situacao',
-        'permissao',
+
+     protected $fillable = [
+        'name', 'surname', 'RG', 'CPF', 'telefone', 'celular',
+        'email', 'password', 'CEP', 'rua', 'numero',
+        'bairro', 'estado', 'situacao', 'permissao',
     ];
 
     /**
@@ -68,7 +57,7 @@ class Employees extends Model
         return $this->Permissao === 'admin';
     }
 
-     /**
+    /**
      * Verifica se o usuário é técnico.
      */
     public function isTecnico()

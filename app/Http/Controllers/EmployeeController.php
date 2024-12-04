@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Employees;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -13,8 +13,8 @@ class EmployeeController extends Controller
      */
     public function index(Request $request)
     {
-        $users = Employees::all();
-        return response()->json($users);
+        $employee = Employee::all();
+        return response()->json($employee);
     }
 
 
@@ -32,13 +32,13 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'Name' => 'required|string|max:20',
-            'Surname' => 'required|string|max:100',
+            'name' => 'required|string|max:20',
+            'surname' => 'required|string|max:100',
             'RG' => 'nullable|string|max:15',
-            'CPF' => 'required|string|size:11|unique:users,CPF',
+            'CPF' => 'required|string|size:11|unique:employees,CPF',
             'telefone' => 'nullable|string|max:20',
-            'celular' => 'nullable|string|max:20',
-            'email' => 'required|email|unique:users,email',
+            'celular' => 'required|string|max:20',
+            'email' => 'required|email|unique:employees,email',
             'password' => 'required|string|min:8',
             'CEP' => 'required|string|size:8',
             'rua' => 'required|string|max:100',
@@ -48,14 +48,15 @@ class EmployeeController extends Controller
             'situacao' => 'nullable|in:Ativo,Inativo',
             'permissao' => 'nullable|string|max:255',
         ]);
+
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
         try {
-            $user = Employees::create([
-                'Name' => $request->Name,
-                'Surname' => $request->Surname,
+            $employee = Employee::create([
+                'name' => $request->name,
+                'surname' => $request->surname,
                 'RG' => $request->RG,
                 'CPF' => $request->CPF,
                 'telefone' => $request->telefone,
@@ -68,14 +69,12 @@ class EmployeeController extends Controller
                 'bairro' => $request->bairro,
                 'estado' => $request->estado,
                 'situacao' => $request->situacao ?? 'Ativo',
-                'permissao' => $request->permissao,
+                'permissao' => $request->permissao ?? 'tecnico',
             ]);
-            return response()->json(['message' => 'User created successfully', 'user' => $user], 201);
+
+            return response()->json(['message' => 'Employee created successfully', 'employee' => $employee], 201);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to create user',
-                'error' => env('APP_DEBUG') ? $e->getMessage() : null
-            ], 500);
+            return response()->json(['message' => 'Failed to create employee', 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -84,12 +83,11 @@ class EmployeeController extends Controller
      */
     public function show(string $id)
     {
-        $user =  Employees::fing($id);
-        if(!$user){
+        $employee =  Employee::fing($id);
+        if (!$employee) {
             return response()->json(['message' => 'User not found'], 404);
         }
-        return response()->json($user);
-
+        return response()->json($employee);
     }
 
     /**

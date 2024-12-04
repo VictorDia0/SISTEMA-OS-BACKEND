@@ -41,7 +41,7 @@ class UserController extends Controller
                 'Surname' => $request->Surname,
                 'celular' => $request->celular,
                 'email' => $request->email,
-                'password' => bcrypt($request->password), 
+                'password' => bcrypt($request->password),
             ]);
             return response()->json(['message' => 'User created successfully', 'user' => $user], 201);
         } catch (\Exception $e) {
@@ -57,20 +57,11 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        $user = User::fing($id);
-        if(!$user){
+        $user = User::find($id);
+        if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
         return response()->json($user);
-
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
     }
 
     /**
@@ -78,7 +69,36 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'Name' => 'sometimes|string|max:20',
+            'Surname' => 'sometimes|string|max:100',
+            'celular' => 'sometimes|string|max:20',
+            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'sometimes|string|min:8',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        try {
+            $user->fill($request->all());
+
+            if ($request->has('password')) {
+                $user->password = Hash::make($request->password);
+            }
+
+            $user->save();
+
+            return response()->json(['message' => 'User updated successfully', 'user' => $user]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to update user'], 500);
+        }
     }
 
     /**
@@ -86,6 +106,16 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        try {
+            $user->delete();
+            return response()->json(['message' => 'User deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to delete user'], 500);
+        }
     }
 }
