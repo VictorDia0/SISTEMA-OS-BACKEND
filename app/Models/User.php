@@ -43,7 +43,14 @@ class User extends Authenticatable
         'surname',
         'phone_number',
         'email',
-        'password'
+        'password',
+        'plan',
+        'account_status',
+        'payment_status',
+        'verification_code',
+        'is_verified',
+        'plan_start_date',
+        'plan_end_date',
     ];
 
 

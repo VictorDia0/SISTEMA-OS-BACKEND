@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('neighborhood', 50);
             $table->char('state', 2);
             $table->enum('role', ['admin', 'manager', 'staff']); // Níveis de acesso
-            $table->enum('status', ['active', 'inactive'])->default('Ativo');
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
     }
