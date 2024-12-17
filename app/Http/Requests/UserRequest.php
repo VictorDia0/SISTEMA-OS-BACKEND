@@ -17,16 +17,14 @@ class UserRequest extends FormRequest
     }
 
     /**
-     * Manipular falha de validação e retornar uma resposta JSON com os erros de validação.
-     *
-     * @param  \Illuminate\Contracts\Validation\Validator  $validator O objeto de validação que contém os erros de validação.
-     * @throws \Illuminate\Http\Exceptions\HttpResponseException
+     * Manipula falhas de validação e retorna uma resposta JSON.
      */
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(
             response()->json([
                 'status' => false,
+                'message' => 'Falha na validação dos dados',
                 'errors' => $validator->errors(),
             ], 422)
         );
@@ -41,14 +39,16 @@ class UserRequest extends FormRequest
      */
     public function rules(): array
     {
-        $userId = $this->route('user');
+        $userId = $this->route('id');
 
         return [
-            'name' => 'required|string|max:50',
-            'surname' => 'required|string|max:50',
-            'celular' => 'nullable|string|max:20',
-            'email' => 'required|email|unique:users,email,' . ($userId ? $userId->id : null),
-            'password' => $userId ? 'nullable|string|min:8' : 'required|string|min:8',
+            'name' => 'sometimes|string|max:50',
+            'surname' => 'sometimes|string|max:50',
+            'phone_number' => 'nullable|string|max:20', // Consistência no nome.
+            'email' => 'sometimes|email|max:255|unique:users,email,' . $userId,
+            'password' => $this->isMethod('patch') || $this->isMethod('put')
+                ? 'nullable|string|min:8'
+                : 'required|string|min:8',
         ];
     }
 
@@ -60,13 +60,18 @@ class UserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'O campo nome é obrigatório',
-            'surname.required' => 'O campo sobrenome é obrigatório',
-            'email.required' => 'O campo email é obrigatório',
-            'email.email' => 'É necessário enviar um email válido',
-            'email.unique' => 'O email já existe',
-            'password.required' => 'O campo senha é obrigatório',
-            'password.min' => 'A senha deve ter no mínimo 8 caracteres',
+            'name.required' => 'O campo nome é obrigatório.',
+            'name.string' => 'O campo nome deve ser uma string.',
+            'name.max' => 'O campo nome pode ter no máximo :max caracteres.',
+            'surname.required' => 'O campo sobrenome é obrigatório.',
+            'surname.string' => 'O campo sobrenome deve ser uma string.',
+            'surname.max' => 'O campo sobrenome pode ter no máximo :max caracteres.',
+            'phone_number.max' => 'O número de telefone pode ter no máximo :max caracteres.',
+            'email.required' => 'O campo email é obrigatório.',
+            'email.email' => 'O campo email deve ser um endereço válido.',
+            'email.unique' => 'O email fornecido já está em uso.',
+            'password.required' => 'O campo senha é obrigatório.',
+            'password.min' => 'A senha deve ter no mínimo :min caracteres.',
         ];
     }
 }
