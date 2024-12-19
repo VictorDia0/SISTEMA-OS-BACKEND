@@ -82,4 +82,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Payment::class);
     }
+
+    // Relacionamento com funcionários
+    public function employees()
+    {
+        return $this->hasMany(Employee::class);
+    }
 }

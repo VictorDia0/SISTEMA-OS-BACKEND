@@ -29,7 +29,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/checkout-cancel', [StripeController::class, 'checkoutCancel'])->name('checkout.cancel');
 
     Route::post('/logout/{id}', [AuthController::class, 'logout']);
-    Route::post('/logout-all', [AuthController::class, 'logoutFromAllDevices']);
+    //Route::post('/logout-all', [AuthController::class, 'logoutFromAllDevices']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::get('/me', [AuthController::class, 'me']);
 
