@@ -43,7 +43,14 @@ class User extends Authenticatable
         'surname',
         'phone_number',
         'email',
-        'password'
+        'password',
+        'plan',
+        'account_status',
+        'payment_status',
+        'verification_code',
+        'is_verified',
+        'plan_start_date',
+        'plan_end_date',
     ];
 
 
@@ -74,5 +81,11 @@ class User extends Authenticatable
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    // Relacionamento com funcionários
+    public function employees()
+    {
+        return $this->hasMany(Employee::class);
     }
 }

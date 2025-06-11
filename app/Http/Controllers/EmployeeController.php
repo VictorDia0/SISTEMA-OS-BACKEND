@@ -2,108 +2,101 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\EmployeeRequest;
 use App\Models\Employee;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+
 
 class EmployeeController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index()
     {
-        $employee = Employee::all();
-        return response()->json($employee);
-    }
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:20',
-            'surname' => 'required|string|max:100',
-            'RG' => 'nullable|string|max:15',
-            'CPF' => 'required|string|size:11|unique:employees,CPF',
-            'telefone' => 'nullable|string|max:20',
-            'celular' => 'required|string|max:20',
-            'email' => 'required|email|unique:employees,email',
-            'password' => 'required|string|min:8',
-            'CEP' => 'required|string|size:8',
-            'rua' => 'required|string|max:100',
-            'numero' => 'required|string|max:10',
-            'bairro' => 'required|string|max:50',
-            'estado' => 'required|string|size:2',
-            'situacao' => 'nullable|in:Ativo,Inativo',
-            'permissao' => 'nullable|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        try {
-            $employee = Employee::create([
-                'name' => $request->name,
-                'surname' => $request->surname,
-                'RG' => $request->RG,
-                'CPF' => $request->CPF,
-                'telefone' => $request->telefone,
-                'celular' => $request->celular,
-                'email' => $request->email,
-                'password' => bcrypt($request->password),
-                'CEP' => $request->CEP,
-                'rua' => $request->rua,
-                'numero' => $request->numero,
-                'bairro' => $request->bairro,
-                'estado' => $request->estado,
-                'situacao' => $request->situacao ?? 'Ativo',
-                'permissao' => $request->permissao ?? 'tecnico',
-            ]);
-
-            return response()->json(['message' => 'Employee created successfully', 'employee' => $employee], 201);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to create employee', 'error' => $e->getMessage()], 500);
-        }
+        $employees = Employee::paginate(10); // Define o número de resultados por página
+        return response()->json($employees);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
-        $employee =  Employee::fing($id);
-        if (!$employee) {
-            return response()->json(['message' => 'User not found'], 404);
+        try {
+            $employee = Employee::findOrFail($id);
+            return response()->json([
+                'status' => true,
+                'message' => 'Employee retrieved successfully',
+                'data' => $employee,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Employee not found',
+                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+            ], 404);
         }
-        return response()->json($employee);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Store a newly created resource in storage.
      */
-    public function edit(string $id)
+    public function store(EmployeeRequest $request, User $user)
     {
-        //
+        // Validar se o limite do plano foi atingido
+        $employeeCount = $user->employees()->count();
+        $planLimits = [
+            'basic' => 10,
+            'medium' => 25,
+            'pro' => 50,
+        ];
+
+        if ($employeeCount >= $planLimits[$user->plan]) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Você atingiu o limite de funcionários para o seu plano.',
+            ], 403);
+        }
+
+        // Adicionar o ID do usuário e criptografar a senha
+        $validatedData = $request->validated();
+        $validatedData['password'] = bcrypt($validatedData['password']);
+        $validatedData['user_id'] = $user->id;
+
+        try {
+            $employee = Employee::create($validatedData);
+            return response()->json(['message' => 'Funcionário criado com sucesso', 'employee' => $employee], 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Falha ao criar funcionário', 'error' => $e->getMessage()], 500);
+        }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(EmployeeRequest $request, string $id)
     {
-        //
+        try {
+            $employee = Employee::findOrFail($id);
+
+            $validatedData = $request->validated();
+
+            // Atualizar senha se fornecida
+            if (isset($validatedData['password'])) {
+                $validatedData['password'] = bcrypt($validatedData['password']);
+            }
+
+            $employee->update($validatedData);
+
+            return response()->json(['message' => 'Funcionário atualizado com sucesso', 'employee' => $employee], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Falha ao atualizar funcionário',
+                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+            ], 500);
+        }
     }
 
     /**
@@ -111,6 +104,17 @@ class EmployeeController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $employee = Employee::findOrFail($id);
+
+            $employee->delete();
+
+            return response()->json(['message' => 'Funcionário excluído com sucesso'], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Falha ao excluir funcionário',
+                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+            ], 500);
+        }
     }
 }

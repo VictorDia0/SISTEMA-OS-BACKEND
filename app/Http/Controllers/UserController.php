@@ -2,120 +2,169 @@
 
 namespace App\Http\Controllers;
 
+use App\Collections\UserCollection;
+use App\Http\Requests\FilterOrderRequest;
+use App\Http\Requests\UserRequest;
+use App\Jobs\JobSendWelcomeEmail;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Services\IUserService;
+use App\Services\ResponseService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request)
+    public function __construct(protected IUserService $userService) {}
+
+    public function index(): JsonResponse
     {
-        $users = User::all();
-        return response()->json($users);
+        $users = $this->userService->getAllUsers();
+        return ResponseService::success(UserCollection::make($users), code: Response::HTTP_OK);
+    }
+
+
+    public function getAllOrdersByUser(FilterOrderRequest $request, ?User $user = null): JsonResponse
+    {
+        $data = (object) $request->validated();
+
+        if (is_null($user)) {
+            $user = Auth::user();
+        }
+
+        $orders = $this->userService->getAllOrdersByUser($user, $data);
+
+        return ResponseService::success($orders, 'feito', code: Response::HTTP_OK);
+    }
+
+
+    private function findUserById(string $id): User
+    {
+        return User::findOrFail($id);
+    }
+
+    public function show(string $id): JsonResponse
+    {
+        try {
+            $user = $this->findUserById($id);
+            return response()->json([
+                'status' => true,
+                'message' => 'User retrieved successfully',
+                'data' => $user,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not found',
+                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+            ], 404);
+        }
     }
 
 
     /**
-     * Store a newly created resource in storage.
+     * Cria novo usuário com os dados fornecidos na requisição.
+     *
+     * @param  \App\Http\Requests\UserRequest  $request O objeto de requisição contendo os dados do usuário a ser criado.
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request)
+    public function store(UserRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'Name' => 'required|string|max:20',
-            'Surname' => 'required|string|max:100',
-            'celular' => 'nullable|string|max:20',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-        ]);
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
+        // Iniciar a transação
+        DB::beginTransaction();
 
         try {
+
             $user = User::create([
-                'Name' => $request->Name,
-                'Surname' => $request->Surname,
-                'celular' => $request->celular,
+                'name' => $request->name,
+                'surname' => $request->surname,
+                'phone_number' => $request->phone_number,
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
+                'plan' => 'basic',
+                'account_status' => 'active',
+                'payment_status' => 'paid',
             ]);
-            return response()->json(['message' => 'User created successfully', 'user' => $user], 201);
-        } catch (\Exception $e) {
+
+            DB::commit();
+
+            JobSendWelcomeEmail::dispatch($user->id)->onQueue('default');
+
+
             return response()->json([
+                'status' => true,
+                'message' => 'Usuário criado com sucesso',
+                'user' => $user
+            ], 201);
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
                 'message' => 'Failed to create user',
-                'error' => env('APP_DEBUG') ? $e->getMessage() : null
+                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
             ], 500);
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function update(UserRequest $request, string $id): JsonResponse
     {
-        $user = User::find($id);
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
-        return response()->json($user);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        $user = User::find($id);
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'Name' => 'sometimes|string|max:20',
-            'Surname' => 'sometimes|string|max:100',
-            'celular' => 'sometimes|string|max:20',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'sometimes|string|min:8',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
+        DB::beginTransaction();
 
         try {
-            $user->fill($request->all());
 
-            if ($request->has('password')) {
+            $user = $this->findUserById($id);
+
+            $user->fill($request->except(['password']));
+
+
+            if ($request->filled('password')) {
                 $user->password = Hash::make($request->password);
             }
 
             $user->save();
 
-            return response()->json(['message' => 'User updated successfully', 'user' => $user]);
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'User updated successfully',
+                'data' => $user,
+            ], 200);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to update user'], 500);
+
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to update user',
+                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+            ], 500);
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        $user = User::find($id);
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
 
+    public function destroy(string $id): JsonResponse
+    {
+        $user = $this->findUserById($id);
         try {
             $user->delete();
-            return response()->json(['message' => 'User deleted successfully']);
+
+
+            return response()->json([
+                'status' => true,
+                'message' => 'User deleted successfully',
+                'data' => $user,
+            ], 200);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to delete user'], 500);
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to delete user',
+                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+            ], 400);
         }
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,5 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Lançar a exceção quando houver erro de autenticação
+        $exceptions->render(function(AuthenticationException $e){
+            return response()->json([
+                'status' => false,
+                'message' => 'Token de autenticação invalido'
+            ]);
+        });
     })->create();
