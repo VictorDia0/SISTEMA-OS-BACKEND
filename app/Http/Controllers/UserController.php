@@ -2,46 +2,53 @@
 
 namespace App\Http\Controllers;
 
+use App\Collections\UserCollection;
+use App\Http\Requests\FilterOrderRequest;
 use App\Http\Requests\UserRequest;
 use App\Jobs\JobSendWelcomeEmail;
 use App\Models\User;
+use App\Services\IUserService;
+use App\Services\ResponseService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
-    /**
-     * Retorna uma lista paginada de usuários.
-     *
-     * Este método recupera uma lista paginada de usuários do banco de dados
-     * e a retorna como uma resposta JSON.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
+    public function __construct(protected IUserService $userService) {}
+
     public function index(): JsonResponse
     {
-        $users = User::paginate(10); // Paginação com 10 usuários por página
-        return response()->json([
-            'status' => true,
-            'message' => 'Users retrieved successfully',
-            'data' => $users,
-        ], 200);
+        $users = $this->userService->getAllUsers();
+        return ResponseService::success(UserCollection::make($users), code: Response::HTTP_OK);
     }
 
 
-    /**
-     * Exibe os detalhes de um usuário específico.
-     *
-     * Este método retorna os detalhes de um usuário específico em formato JSON.
-     *
-     * @param  \App\Models\User  $user O objeto do usuário a ser exibido
-     * @return \Illuminate\Http\JsonResponse
-     */
+    public function getAllOrdersByUser(FilterOrderRequest $request, ?User $user = null): JsonResponse
+    {
+        $data = (object) $request->validated();
+
+        if (is_null($user)) {
+            $user = Auth::user();
+        }
+
+        $orders = $this->userService->getAllOrdersByUser($user, $data);
+
+        return ResponseService::success($orders, 'feito', code: Response::HTTP_OK);
+    }
+
+
+    private function findUserById(string $id): User
+    {
+        return User::findOrFail($id);
+    }
+
     public function show(string $id): JsonResponse
     {
         try {
-            $user = User::findOrFail($id);
+            $user = $this->findUserById($id);
             return response()->json([
                 'status' => true,
                 'message' => 'User retrieved successfully',
@@ -69,25 +76,23 @@ class UserController extends Controller
         DB::beginTransaction();
 
         try {
-            //Cadastrar usuario
+
             $user = User::create([
                 'name' => $request->name,
                 'surname' => $request->surname,
                 'phone_number' => $request->phone_number,
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
-                'plan' => 'basic', // Valor padrão
-                'account_status' => 'active', // Valor padrão
-                'payment_status' => 'paid', // Valor padrão
+                'plan' => 'basic',
+                'account_status' => 'active',
+                'payment_status' => 'paid',
             ]);
 
-            // Cometer a transação
             DB::commit();
 
-            //Agendar envio de email
             JobSendWelcomeEmail::dispatch($user->id)->onQueue('default');
 
-            // Retorna a resposta de sucesso
+
             return response()->json([
                 'status' => true,
                 'message' => 'Usuário criado com sucesso',
@@ -95,7 +100,6 @@ class UserController extends Controller
             ], 201);
         } catch (\Exception $e) {
 
-            // Reverter a transação em caso de erro
             DB::rollBack();
 
             return response()->json([
@@ -106,26 +110,17 @@ class UserController extends Controller
         }
     }
 
-
-    /**
-     * Atualizar os dados de um usuário existente com base nos dados fornecidos na requisição.
-     *
-     * @param  \App\Http\Requests\UserRequest  $request O objeto de requisição contendo os dados do usuário a ser atualizado.
-     * @param  \App\Models\User  $user O usuário a ser atualizado.
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function update(UserRequest $request, string $id): JsonResponse
     {
         DB::beginTransaction();
 
         try {
-            //Buscando o usuario pelo ID
-            $user = User::findOrFail($id);
 
-            // Atualizar a senha somente se ela for fornecida na requisição.
+            $user = $this->findUserById($id);
+
             $user->fill($request->except(['password']));
 
-            // Atualiza a senha apenas se fornecida.
+
             if ($request->filled('password')) {
                 $user->password = Hash::make($request->password);
             }
@@ -141,7 +136,6 @@ class UserController extends Controller
             ], 200);
         } catch (\Exception $e) {
 
-            // Reverter a transação em caso de erro
             DB::rollBack();
 
             return response()->json([
@@ -152,19 +146,14 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Excluir usuário no banco de dados.
-     *
-     * @param  \App\Models\User  $user O usuário a ser excluído.
-     * @return \Illuminate\Http\JsonResponse
-     */
+
     public function destroy(string $id): JsonResponse
     {
-        $user = User::findOrFail($id);
+        $user = $this->findUserById($id);
         try {
             $user->delete();
 
-            // Retorna os dados do usuário apagado e uma mensagem de sucesso com status 200
+
             return response()->json([
                 'status' => true,
                 'message' => 'User deleted successfully',
