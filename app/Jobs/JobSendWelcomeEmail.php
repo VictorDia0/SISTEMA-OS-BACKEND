@@ -27,8 +27,7 @@ class JobSendWelcomeEmail implements ShouldQueue
      */
     public function handle(): void
     {
-        $user =  User::find($this->userId);
-
+        $user = User::find($this->userId);
 
         Mail::to($user->email)->send(new ValidationEmail($user));
     }

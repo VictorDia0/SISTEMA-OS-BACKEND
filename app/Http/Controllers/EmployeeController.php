@@ -7,7 +7,6 @@ use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 
-
 class EmployeeController extends Controller
 {
     /**
@@ -26,17 +25,23 @@ class EmployeeController extends Controller
     {
         try {
             $employee = Employee::findOrFail($id);
-            return response()->json([
-                'status' => true,
-                'message' => 'Employee retrieved successfully',
-                'data' => $employee,
-            ], 200);
+            return response()->json(
+                [
+                    'status' => true,
+                    'message' => 'Employee retrieved successfully',
+                    'data' => $employee,
+                ],
+                200
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Employee not found',
-                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
-            ], 404);
+            return response()->json(
+                [
+                    'status' => false,
+                    'message' => 'Employee not found',
+                    'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+                ],
+                404
+            );
         }
     }
 
@@ -54,10 +59,13 @@ class EmployeeController extends Controller
         ];
 
         if ($employeeCount >= $planLimits[$user->plan]) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Você atingiu o limite de funcionários para o seu plano.',
-            ], 403);
+            return response()->json(
+                [
+                    'status' => false,
+                    'message' => 'Você atingiu o limite de funcionários para o seu plano.',
+                ],
+                403
+            );
         }
 
         // Adicionar o ID do usuário e criptografar a senha
@@ -92,10 +100,13 @@ class EmployeeController extends Controller
 
             return response()->json(['message' => 'Funcionário atualizado com sucesso', 'employee' => $employee], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Falha ao atualizar funcionário',
-                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
-            ], 500);
+            return response()->json(
+                [
+                    'message' => 'Falha ao atualizar funcionário',
+                    'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+                ],
+                500
+            );
         }
     }
 
@@ -111,10 +122,13 @@ class EmployeeController extends Controller
 
             return response()->json(['message' => 'Funcionário excluído com sucesso'], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Falha ao excluir funcionário',
-                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
-            ], 500);
+            return response()->json(
+                [
+                    'message' => 'Falha ao excluir funcionário',
+                    'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+                ],
+                500
+            );
         }
     }
 }

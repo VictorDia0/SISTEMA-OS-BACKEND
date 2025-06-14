@@ -22,11 +22,14 @@ class UserRequest extends FormRequest
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(
-            response()->json([
-                'status' => false,
-                'message' => 'Falha na validação dos dados',
-                'errors' => $validator->errors(),
-            ], 422)
+            response()->json(
+                [
+                    'status' => false,
+                    'message' => 'Falha na validação dos dados',
+                    'errors' => $validator->errors(),
+                ],
+                422
+            )
         );
         // O código de status HTTP 422 significa "Unprocessable Entity" (Entidade Não Processável).
         //Esse código é usado quando o servidor entende a requisição do cliente, mas não pode processá-la devido a erros de validação no lado do servidor.
@@ -46,9 +49,8 @@ class UserRequest extends FormRequest
             'surname' => 'sometimes|string|max:50',
             'phone_number' => 'nullable|string|max:20', // Consistência no nome.
             'email' => 'sometimes|email|max:255|unique:users,email,' . $userId,
-            'password' => $this->isMethod('patch') || $this->isMethod('put')
-                ? 'nullable|string|min:8'
-                : 'required|string|min:8',
+            'password' =>
+                $this->isMethod('patch') || $this->isMethod('put') ? 'nullable|string|min:8' : 'required|string|min:8',
         ];
     }
 

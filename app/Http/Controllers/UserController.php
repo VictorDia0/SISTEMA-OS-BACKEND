@@ -25,7 +25,6 @@ class UserController extends Controller
         return ResponseService::success(UserCollection::make($users), code: Response::HTTP_OK);
     }
 
-
     public function getAllOrdersByUser(FilterOrderRequest $request, ?User $user = null): JsonResponse
     {
         $data = (object) $request->validated();
@@ -39,7 +38,6 @@ class UserController extends Controller
         return ResponseService::success($orders, 'feito', code: Response::HTTP_OK);
     }
 
-
     private function findUserById(string $id): User
     {
         return User::findOrFail($id);
@@ -49,20 +47,25 @@ class UserController extends Controller
     {
         try {
             $user = $this->findUserById($id);
-            return response()->json([
-                'status' => true,
-                'message' => 'User retrieved successfully',
-                'data' => $user,
-            ], 200);
+            return response()->json(
+                [
+                    'status' => true,
+                    'message' => 'User retrieved successfully',
+                    'data' => $user,
+                ],
+                200
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'User not found',
-                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
-            ], 404);
+            return response()->json(
+                [
+                    'status' => false,
+                    'message' => 'User not found',
+                    'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+                ],
+                404
+            );
         }
     }
-
 
     /**
      * Cria novo usuário com os dados fornecidos na requisição.
@@ -76,7 +79,6 @@ class UserController extends Controller
         DB::beginTransaction();
 
         try {
-
             $user = User::create([
                 'name' => $request->name,
                 'surname' => $request->surname,
@@ -92,21 +94,25 @@ class UserController extends Controller
 
             JobSendWelcomeEmail::dispatch($user->id)->onQueue('default');
 
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Usuário criado com sucesso',
-                'user' => $user
-            ], 201);
+            return response()->json(
+                [
+                    'status' => true,
+                    'message' => 'Usuário criado com sucesso',
+                    'user' => $user,
+                ],
+                201
+            );
         } catch (\Exception $e) {
-
             DB::rollBack();
 
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to create user',
-                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
-            ], 500);
+            return response()->json(
+                [
+                    'status' => false,
+                    'message' => 'Failed to create user',
+                    'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+                ],
+                500
+            );
         }
     }
 
@@ -115,11 +121,9 @@ class UserController extends Controller
         DB::beginTransaction();
 
         try {
-
             $user = $this->findUserById($id);
 
             $user->fill($request->except(['password']));
-
 
             if ($request->filled('password')) {
                 $user->password = Hash::make($request->password);
@@ -129,23 +133,27 @@ class UserController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'status' => true,
-                'message' => 'User updated successfully',
-                'data' => $user,
-            ], 200);
+            return response()->json(
+                [
+                    'status' => true,
+                    'message' => 'User updated successfully',
+                    'data' => $user,
+                ],
+                200
+            );
         } catch (\Exception $e) {
-
             DB::rollBack();
 
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to update user',
-                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
-            ], 500);
+            return response()->json(
+                [
+                    'status' => false,
+                    'message' => 'Failed to update user',
+                    'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+                ],
+                500
+            );
         }
     }
-
 
     public function destroy(string $id): JsonResponse
     {
@@ -153,18 +161,23 @@ class UserController extends Controller
         try {
             $user->delete();
 
-
-            return response()->json([
-                'status' => true,
-                'message' => 'User deleted successfully',
-                'data' => $user,
-            ], 200);
+            return response()->json(
+                [
+                    'status' => true,
+                    'message' => 'User deleted successfully',
+                    'data' => $user,
+                ],
+                200
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to delete user',
-                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
-            ], 400);
+            return response()->json(
+                [
+                    'status' => false,
+                    'message' => 'Failed to delete user',
+                    'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+                ],
+                400
+            );
         }
     }
 }

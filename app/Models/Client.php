@@ -11,23 +11,14 @@ class Client extends Model
 
     protected $table = 'clients';
 
-    protected $fillable = [
-        'cpf',
-        'nome_completo',
-        'contato',
-        'rua',
-        'numero',
-        'bairro',
-        'cidade',
-        'estado',
-    ];
+    protected $fillable = ['cpf', 'nome_completo', 'contato', 'rua', 'numero', 'bairro', 'cidade', 'estado'];
 
-    /**
-     * Retorna se o cliente possui e-mail verificado (caso você adicione essa funcionalidade depois).
-     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
     public function hasVerifiedEmail(): bool
     {
-        // Retorna falso por padrão, ou ajuste conforme seu sistema
         return false;
     }
 }
