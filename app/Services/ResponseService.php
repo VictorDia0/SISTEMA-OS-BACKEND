@@ -30,4 +30,18 @@ class ResponseService
             $code ?? Response::HTTP_INTERNAL_SERVER_ERROR
         );
     }
+
+    public static function error(string $message = '', int $code = 400, $data = null)
+    {
+        $response = [
+            'success' => false,
+            'message' => $message,
+        ];
+
+        if (!is_null($data)) {
+            $response['data'] = $data;
+        }
+
+        return response()->json($response, $code);
+    }
 }

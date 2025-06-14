@@ -2,21 +2,22 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\AccountStatusEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PlanEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
-
     use HasApiTokens, HasFactory, Notifiable;
 
-    public $incrementing = false; // Desativa auto-incremento
-    protected $keyType = 'string'; // Define o tipo da chave primária como string
-
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected static function boot()
     {
@@ -24,19 +25,18 @@ class User extends Authenticatable
 
         static::creating(function ($model) {
             if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = Str::uuid()->toString(); // Gera um UUID
+                $model->{$model->getKeyName()} = Str::uuid()->toString();
             }
         });
     }
 
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    public function clients()
+    {
+        return $this->hasMany(Client::class);
+    }
+
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'id',
         'name',
@@ -53,39 +53,27 @@ class User extends Authenticatable
         'plan_end_date',
     ];
 
+    protected $hidden = ['password', 'remember_token'];
 
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+
+            'plan' => PlanEnum::class,
+            'account_status' => AccountStatusEnum::class,
+            'payment_status' => PaymentStatusEnum::class,
         ];
     }
 
-    public function payments()
+    public function getJWTIdentifier()
     {
-        return $this->hasMany(Payment::class);
+        return $this->getKey();
     }
 
-    // Relacionamento com funcionários
-    public function employees()
+    public function getJWTCustomClaims()
     {
-        return $this->hasMany(Employee::class);
+        return [];
     }
 }

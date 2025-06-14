@@ -25,9 +25,7 @@ class ValidationEmail extends Mailable
      */
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'Boas Vindas Email',
-        );
+        return new Envelope(subject: 'Boas Vindas Email');
     }
 
     /**
@@ -35,10 +33,7 @@ class ValidationEmail extends Mailable
      */
     public function content(): Content
     {
-        return new Content(
-            view: 'emails.sendWelcomeHtmlEmail',
-            text: 'emails.sendWelcomeTextEmail',
-        );
+        return new Content(view: 'emails.sendWelcomeHtmlEmail', text: 'emails.sendWelcomeTextEmail');
     }
 
     /**

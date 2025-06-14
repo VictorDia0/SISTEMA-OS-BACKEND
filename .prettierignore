@@ -1,0 +1,6 @@
+storage/
+node_modules/
+vendor/
+public/
+artisan
+README.md

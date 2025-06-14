@@ -2,7 +2,6 @@
 
 namespace App\Collections;
 
-
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;

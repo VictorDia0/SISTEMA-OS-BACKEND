@@ -29,10 +29,12 @@ class StripeController extends Controller
         $session = Session::create([
             'payment_method_types' => ['card'],
             'customer_email' => Auth::user()->email,
-            'line_items' => [[
-                'price' => $priceIds[$request->plan],
-                'quantity' => 1,
-            ]],
+            'line_items' => [
+                [
+                    'price' => $priceIds[$request->plan],
+                    'quantity' => 1,
+                ],
+            ],
             'mode' => 'subscription',
             'success_url' => route('checkout.success'),
             'cancel_url' => route('checkout.cancel'),

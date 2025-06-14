@@ -1,0 +1,9 @@
+{
+    "tabWidth": 4,
+    "useTabs": false,
+    "endOfLine": "lf",
+    "singleQuote": true,
+    "bracketSpacing": true,
+    "plugins": ["@prettier/plugin-php"],
+    "printWidth": 120
+}

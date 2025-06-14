@@ -12,7 +12,6 @@ class Employee extends Model
     public $incrementing = false; // Desativa auto-incremento
     protected $keyType = 'string'; // Define o tipo da chave primária como string
 
-
     protected static function boot()
     {
         parent::boot();
@@ -33,10 +32,22 @@ class Employee extends Model
      * @var array<int, string>
      */
 
-     protected $fillable = [
-        'name', 'surname', 'RG', 'CPF', 'telefone', 'celular',
-        'email', 'password', 'CEP', 'rua', 'numero',
-        'bairro', 'estado', 'situacao', 'permissao',
+    protected $fillable = [
+        'name',
+        'surname',
+        'RG',
+        'CPF',
+        'telefone',
+        'celular',
+        'email',
+        'password',
+        'CEP',
+        'rua',
+        'numero',
+        'bairro',
+        'estado',
+        'situacao',
+        'permissao',
     ];
 
     /**
@@ -44,10 +55,7 @@ class Employee extends Model
      *
      * @var array<int, string>
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token'];
 
     /**
      * Verifica se o usuário é administrador.

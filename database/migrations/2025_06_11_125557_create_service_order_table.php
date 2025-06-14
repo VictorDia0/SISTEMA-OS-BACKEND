@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         Schema::create('service_order', function (Blueprint $table) {
@@ -19,11 +18,10 @@ return new class extends Migration
             $table->string('descricao_servico')->nullable();
             $table->string('defeito')->nullable();
             $table->string('observacoes')->nullable();
-            
+
             $table->timestamps();
         });
     }
-
 
     public function down(): void
     {
