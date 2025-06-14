@@ -9,5 +9,6 @@ use Illuminate\Support\Collection as SupportCollection;
 interface IUserService
 {
     public function getAllUsers(): Collection;
-    public function getAllOrdersByUser(User $user, object $data): SupportCollection;
+    //public function getAllOrdersByUser(User $user, object $data): SupportCollection;
+    public function GetUserByEmail(string $email): User;
 }

@@ -82,9 +82,11 @@ class RefreshToken extends Model
         return $refreshToken;
     }
 
-    public static function logout(User $user): void
+    public static function logout(User $user, string $device): void
     {
-        self::where('user_id', $user->id)->delete();
+        self::where('user_id', $user->id)
+            ->where('device', $device)
+            ->delete();
     }
 
     public static function gerarToken(): string

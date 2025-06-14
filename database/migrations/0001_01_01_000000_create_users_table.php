@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->string('verification_code', 6)->nullable()->index();
             $table->string('role')->default('user');
             $table->string('is_verified')->default(false);
+            $table->boolean('is_active')->default(true);
 
             $table->string('plan')->default('free');
             $table->string('account_status')->default('pending');

@@ -10,9 +10,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'auth'], function () {
     Route::controller(AuthController::class)->group(function () {
-        Route::get('/me', 'getDadosUsuarioAutenticado')->middleware('jwt.auth');
-        Route::post('/login', 'login');
-        Route::post('/refresh', 'refresh');
+        Route::post('/login', 'login')->name('login');
+        Route::post('/refresh', 'refresh')->name('refresh');
+        Route::post('/logout', 'logout')->middleware('jwt.auth')->name('logout');
+        Route::get('/me', 'getDadosUsuarioAutenticado')->middleware('jwt.auth')->name('me');
     });
 });
 
@@ -37,7 +38,8 @@ Route::group(['prefix' => 'employees'], function () {
     Route::delete('/{id}', [EmployeeController::class, 'destroy']);
 });
 
-Route::post('/create-checkout-session', [StripeController::class, 'createCheckoutSession']);
+
+/* Route::post('/create-checkout-session', [StripeController::class, 'createCheckoutSession']);
 Route::get('/checkout-success', [StripeController::class, 'checkoutSuccess'])->name('checkout.success');
 Route::get('/checkout-cancel', [StripeController::class, 'checkoutCancel'])->name('checkout.cancel');
 
@@ -54,3 +56,4 @@ Route::get('/preview-email', function () {
     $user = 'Victor';
     return view('emails\sendWelcomeTextEmail.blade.php', compact('user'));
 });
+ */

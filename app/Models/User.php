@@ -14,7 +14,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens;
 
     public $incrementing = false;
     protected $keyType = 'string';
@@ -49,6 +49,7 @@ class User extends Authenticatable implements JWTSubject
         'payment_status',
         'verification_code',
         'is_verified',
+        'is_active',
         'plan_start_date',
         'plan_end_date',
     ];
@@ -60,12 +61,12 @@ class User extends Authenticatable implements JWTSubject
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-
             'plan' => PlanEnum::class,
             'account_status' => AccountStatusEnum::class,
             'payment_status' => PaymentStatusEnum::class,
         ];
     }
+
 
     public function getJWTIdentifier()
     {
@@ -75,5 +76,10 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    public static function getUserByEmail(string $email): User|null
+    {
+        return self::where('email', $email)->first();
     }
 }

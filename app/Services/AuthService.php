@@ -65,7 +65,7 @@ class AuthService implements IAuthService
     public function logout(): void
     {
         try {
-            RefreshToken::logout(JWTAuth::user());
+            RefreshToken::logout(JWTAuth::user(), request()->header('User-Agent'));
             JWTAuth::logout();
         } catch (\Exception $e) {
             throw new AuthException('Erro interno ao efetuar logout!', Response::HTTP_INTERNAL_SERVER_ERROR);

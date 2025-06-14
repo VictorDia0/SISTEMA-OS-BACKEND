@@ -2,28 +2,70 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\AuthException;
 use App\Http\Requests\LoginRequest;
 use App\Http\Resources\AutenticatedUserResource;
-use App\Models\RefreshToken;
 use App\Services\IAuthService;
 use App\Services\IUserService;
 use App\Services\ResponseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\Cookie;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
+    private int $maxAttempts = 5;
+    private int $decayMinutes = 10;
+
     public function __construct(private IAuthService $authService, private IUserService $userService) {}
 
     public function login(LoginRequest $request): JsonResponse
     {
         $credenciais = $request->validated();
-        $dispositivo = $request->header('User-Agent');
+        $email = $credenciais['email'];
+        $ip = $request->ip();
 
-        $tokens = $this->authService->login($credenciais, $dispositivo);
+        $key = "login_attemps:{$email}:{$ip}";
+        if (Cache::has($key) && Cache::get($key) >= $this->maxAttempts) {
+            return ResponseService::error(
+                message: 'Muitas tentativas de login. Tente novamente mais tarde',
+                code: Response::HTTP_TOO_MANY_REQUESTS
+            );
+        }
+
+        $origin = $request->header('Origin') ?? $request->header('Referer');
+        if ($origin && !str_starts_with($origin, config('app.url'))) {
+            return ResponseService::error(
+                message: 'Requisição de origem inválida.',
+                code: Response::HTTP_FORBIDDEN
+            );
+        }
+
+        $user = $this->userService->getUserByEmail($email);
+
+        if (!$user || !$user->is_active) {
+            return ResponseService::error(
+                message: 'Usuário inativo ou não encontrado.',
+                code: Response::HTTP_UNAUTHORIZED
+            );
+        }
+
+        try {
+            $tokens = $this->authService->login($credenciais, $request->header('User-Agent'));
+        } catch (\Exception $e) {
+
+            Cache::add($key, 0, now()
+                ->addMinutes($this->decayMinutes));
+            Cache::increment($key);
+
+            return ResponseService::error(
+                message: 'Credenciais inválidas',
+                code: Response::HTTP_UNAUTHORIZED
+            );
+        }
 
         return ResponseService::success(
             new AutenticatedUserResource(JWTAuth::user(), $tokens['access_token']),
@@ -50,13 +92,38 @@ class AuthController extends Controller
         )->cookie($this->makeRefreshCookie($tokens['refresh_token']));
     }
 
-    public function logout() {}
+    public function logout(Request $request): JsonResponse
+    {
+        if (!JWTAuth::check()) {
+            return ResponseService::error(
+                message: 'Nenhum usuario autenticado',
+                code: Response::HTTP_UNAUTHORIZED
+            );
+        }
+
+        try {
+            $this->authService->logout($request->header('User-Agent'), $request->ip());
+
+            return ResponseService::success(
+                data: [],
+                message: 'Logout efetuado com sucesso',
+                code: Response::HTTP_OK
+            )->withoutCookie($this->makeEmptyRefreshCookie());
+        } catch (AuthException $e) {
+
+            return ResponseService::error(
+                message: $e->getMessage(),
+                code: $e->getCode()
+            );
+        }
+    }
+
 
     public function getDadosUsuarioAutenticado(): JsonResponse
     {
-        $user = AutenticatedUserResource::make(JWTAuth::user());
+
         return ResponseService::success(
-            $user,
+            new AutenticatedUserResource(JWTAuth::user(), JWTAuth::getToken()),
             'Dados do usuário autenticado retornados com sucesso.',
             Response::HTTP_OK
         );
@@ -67,13 +134,28 @@ class AuthController extends Controller
         return Cookie::create(
             'refresh_token',
             $refreshToken,
-            time() + 30 * 24 * 60 * 60, // 30 dias em segundos (UNIX timestamp)
+            60 * 24 * 7,
             '/',
-            'localhost',
-            false, // secure (true em produção)
-            true, // httpOnly
-            false, // raw
-            'Lax' // sameSite
+            config('session.domain', 'localhost'),
+            true,
+            true,
+            false,
+            'Strict'
+        );
+    }
+
+    private function makeEmptyRefreshCookie(): Cookie
+    {
+        return Cookie::create(
+            'refresh_token',
+            '',
+            -1,
+            '/',
+            config('session.domain', 'localhost'),
+            true,
+            true,
+            false,
+            'Strict'
         );
     }
 }
