@@ -4,11 +4,16 @@ namespace App\Services;
 
 use App\Exceptions\AuthException;
 use App\Models\RefreshToken;
+use App\Models\User;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthService implements IAuthService
 {
+    public function __construct(protected IVerificacaoEmailService $emailVerificationService) {}
+
+
     public function login(array $credenciais, string $dispositivo): array
     {
         $token = JWTAuth::attempt($credenciais);
@@ -17,8 +22,14 @@ class AuthService implements IAuthService
             throw new AuthException('Usuario ou senha inválidos', Response::HTTP_UNAUTHORIZED);
         }
 
+        $usuario = Auth::user();
+
+        if (is_null($usuario->email_verified_at)) {
+            throw new AuthException('Você precisa verificar seu e-mail antes de fazer login.', Response::HTTP_FORBIDDEN);
+        }
+
         try {
-            $refreshToken = RefreshToken::make(JWTAuth::user(), $dispositivo);
+            $refreshToken = RefreshToken::make($usuario, $dispositivo);
 
             return [
                 'access_token' => $token,
@@ -70,5 +81,28 @@ class AuthService implements IAuthService
         } catch (\Exception $e) {
             throw new AuthException('Erro interno ao efetuar logout!', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    public function register(array $data): string
+    {
+        $senhaCriptografada = bcrypt($data['password']);
+
+        $usuario = User::create([
+            ...$data,
+            'password' => $senhaCriptografada,
+            'email_verified_at' => null,
+        ]);
+
+        if ($usuario) {
+            
+            $this->emailVerificationService->sendEmailVerification($usuario);
+
+            return 'Cadastro realizado com sucesso. Verifique seu e-mail para continuar.';
+        }
+
+        throw new AuthException(
+            'Erro ao cadastrar usuário! Por favor, verifique as informações fornecidas e tente novamente.',
+            Response::HTTP_BAD_REQUEST
+        );
     }
 }

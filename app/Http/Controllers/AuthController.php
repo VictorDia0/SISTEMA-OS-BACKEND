@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\AuthException;
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\AutenticatedUserResource;
 use App\Services\IAuthService;
 use App\Services\IUserService;
@@ -18,7 +19,6 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 class AuthController extends Controller
 {
     private int $maxAttempts = 5;
-    private int $decayMinutes = 10;
 
     public function __construct(private IAuthService $authService, private IUserService $userService) {}
 
@@ -53,19 +53,9 @@ class AuthController extends Controller
             );
         }
 
-        try {
-            $tokens = $this->authService->login($credenciais, $request->header('User-Agent'));
-        } catch (\Exception $e) {
 
-            Cache::add($key, 0, now()
-                ->addMinutes($this->decayMinutes));
-            Cache::increment($key);
+        $tokens = $this->authService->login($credenciais, $request->header('User-Agent'));
 
-            return ResponseService::error(
-                message: 'Credenciais inválidas',
-                code: Response::HTTP_UNAUTHORIZED
-            );
-        }
 
         return ResponseService::success(
             new AutenticatedUserResource(JWTAuth::user(), $tokens['access_token']),
@@ -101,23 +91,33 @@ class AuthController extends Controller
             );
         }
 
+        $this->authService->logout($request->header('User-Agent'), $request->ip());
+
+        return ResponseService::success(
+            data: [],
+            message: 'Logout efetuado com sucesso',
+            code: Response::HTTP_OK
+        )->withoutCookie($this->makeEmptyRefreshCookie());
+    }
+
+    public function register(RegisterRequest $request): JsonResponse
+    {
         try {
-            $this->authService->logout($request->header('User-Agent'), $request->ip());
+            $data = $request->validated();
+            $message = $this->authService->register($data);
 
             return ResponseService::success(
                 data: [],
-                message: 'Logout efetuado com sucesso',
-                code: Response::HTTP_OK
-            )->withoutCookie($this->makeEmptyRefreshCookie());
+                message: $message,
+                code: Response::HTTP_CREATED
+            );
         } catch (AuthException $e) {
-
             return ResponseService::error(
                 message: $e->getMessage(),
                 code: $e->getCode()
             );
         }
     }
-
 
     public function getDadosUsuarioAutenticado(): JsonResponse
     {

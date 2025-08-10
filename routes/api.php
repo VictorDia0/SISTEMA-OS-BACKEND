@@ -2,18 +2,17 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
-use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\StripeController;
 use App\Http\Controllers\UserController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'auth'], function () {
     Route::controller(AuthController::class)->group(function () {
-        Route::post('/login', 'login')->name('login');
-        Route::post('/refresh', 'refresh')->name('refresh');
-        Route::post('/logout', 'logout')->middleware('jwt.auth')->name('logout');
-        Route::get('/me', 'getDadosUsuarioAutenticado')->middleware('jwt.auth')->name('me');
+        Route::post('/login', 'login');
+        Route::post('/refresh', 'refresh');
+        Route::post('/logout', 'logout')->middleware('jwt.auth');
+        Route::get('/me', 'getDadosUsuarioAutenticado')->middleware('jwt.auth');
+        Route::post('/register', 'register');
     });
 });
 
@@ -31,7 +30,7 @@ Route::group(['prefix' => 'users', 'middleware' => 'jwt.verify'], function () {
     });
 });
 
-Route::group(['prefix' => 'employees'], function () {
+/* Route::group(['prefix' => 'employees'], function () {
     Route::get('/', [EmployeeController::class, 'index']);
     Route::post('/', [EmployeeController::class, 'store']);
     Route::get('/{id}', [EmployeeController::class, 'show']);
@@ -39,7 +38,7 @@ Route::group(['prefix' => 'employees'], function () {
 });
 
 
-/* Route::post('/create-checkout-session', [StripeController::class, 'createCheckoutSession']);
+Route::post('/create-checkout-session', [StripeController::class, 'createCheckoutSession']);
 Route::get('/checkout-success', [StripeController::class, 'checkoutSuccess'])->name('checkout.success');
 Route::get('/checkout-cancel', [StripeController::class, 'checkoutCancel'])->name('checkout.cancel');
 

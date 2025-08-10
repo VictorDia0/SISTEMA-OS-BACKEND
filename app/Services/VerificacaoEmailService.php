@@ -18,7 +18,7 @@ class VerificacaoEmailService implements IVerificacaoEmailService
 {
     public function __construct(protected IVerificacaoEmailStrategy $emailVerificationStrategy) {}
 
-    public function enviarVerificacaoEmail(User $user): void
+    public function sendEmailVerification(User $user): void
     {
         try {
             $url = $this->gerarLinkDeVerificacao($user->email);
@@ -34,8 +34,9 @@ class VerificacaoEmailService implements IVerificacaoEmailService
         $this->validarVerificacao($verificacao);
 
         $usuario = User::marcarEmailComoVerificado($email);
-        $usuario->assignRole(RoleEnum::PADRAO);
+        $usuario->assignRole(RoleEnum::CLIENTE);
         $verificacao->delete();
+
         return true;
     }
 
@@ -43,11 +44,12 @@ class VerificacaoEmailService implements IVerificacaoEmailService
     {
         try {
             DB::beginTransaction();
+
             $verificacao = $this->gerarVerificacao($email, Carbon::now()->addHours(24));
             $url = $this->emailVerificationStrategy->definirUrlDeVerificacao($verificacao->token, $verificacao->email);
             $verificacao->save();
-            DB::commit();
 
+            DB::commit();
             return $url;
         } catch (\Throwable $th) {
             DB::rollBack();
