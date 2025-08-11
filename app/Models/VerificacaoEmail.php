@@ -9,9 +9,14 @@ use Illuminate\Support\Str;
 
 class VerificacaoEmail extends Model
 {
-    public function __construct(string $email = null, string $token = null, $expired_at = null)
+    protected $table = 'emails_verifications';
+    protected $fillable = ['email', 'token', 'expired_at'];
+    protected $guarded = ['id'];
+    protected $dates = ['expired_at'];
+
+    public function __construct(?string $email = null, ?string $token = null, $expired_at = null)
     {
-        if($email !== null) {
+        if ($email !== null) {
             $this->email = $email;
         }
 
@@ -19,12 +24,12 @@ class VerificacaoEmail extends Model
         $this->expired_at = $expired_at ?? Carbon::now()->addMinutes(10);
     }
 
-    public static function getVerificacaoPorEmail(string $email): Builder|null
+    public static function getVerificacaoPorEmail(string $email): ?Builder
     {
         return self::where('email', $email);
     }
 
-    public static function verificacao(string $email, string $token): VerificacaoEmail|null
+    public static function verificacao(string $email, string $token): ?VerificacaoEmail
     {
         return self::where(['email' => $email, 'token' => $token])->first();
     }

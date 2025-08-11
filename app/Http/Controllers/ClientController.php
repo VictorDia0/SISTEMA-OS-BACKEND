@@ -14,6 +14,7 @@ class ClientController extends Controller
     public function index()
     {
         $clients = $this->clientService->getAllClients();
+
         return ResponseService::success(ClientCollection::make($clients), Response::HTTP_OK);
     }
 }

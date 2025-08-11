@@ -14,6 +14,7 @@ class JobSendWelcomeEmail implements ShouldQueue
 
     /**
      * Create a new job instance.
+     *
      * @return int $userId
      */
     public function __construct(private $userId)
@@ -23,7 +24,6 @@ class JobSendWelcomeEmail implements ShouldQueue
 
     /**
      * Execute the job.
-     * @return void
      */
     public function handle(): void
     {

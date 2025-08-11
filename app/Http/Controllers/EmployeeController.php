@@ -15,6 +15,7 @@ class EmployeeController extends Controller
     public function index()
     {
         $employees = Employee::paginate(10); // Define o número de resultados por página
+
         return response()->json($employees);
     }
 
@@ -25,6 +26,7 @@ class EmployeeController extends Controller
     {
         try {
             $employee = Employee::findOrFail($id);
+
             return response()->json(
                 [
                     'status' => true,
@@ -75,6 +77,7 @@ class EmployeeController extends Controller
 
         try {
             $employee = Employee::create($validatedData);
+
             return response()->json(['message' => 'Funcionário criado com sucesso', 'employee' => $employee], 201);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Falha ao criar funcionário', 'error' => $e->getMessage()], 500);

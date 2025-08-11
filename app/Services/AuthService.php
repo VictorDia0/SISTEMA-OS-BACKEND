@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\AccountStatusEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PlanEnum;
 use App\Exceptions\AuthException;
 use App\Models\RefreshToken;
 use App\Models\User;
@@ -12,7 +15,6 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 class AuthService implements IAuthService
 {
     public function __construct(protected IVerificacaoEmailService $emailVerificationService) {}
-
 
     public function login(array $credenciais, string $dispositivo): array
     {
@@ -25,7 +27,10 @@ class AuthService implements IAuthService
         $usuario = Auth::user();
 
         if (is_null($usuario->email_verified_at)) {
-            throw new AuthException('Você precisa verificar seu e-mail antes de fazer login.', Response::HTTP_FORBIDDEN);
+            throw new AuthException(
+                'Você precisa verificar seu e-mail antes de fazer login.',
+                Response::HTTP_FORBIDDEN
+            );
         }
 
         try {
@@ -83,26 +88,35 @@ class AuthService implements IAuthService
         }
     }
 
-    public function register(array $data): string
+    public function registrarUsuario(array $data): string
     {
         $senhaCriptografada = bcrypt($data['password']);
-
         $usuario = User::create([
             ...$data,
             'password' => $senhaCriptografada,
-            'email_verified_at' => null,
+            'plan' => PlanEnum::FREE->value,
+            'account_status' => AccountStatusEnum::PENDING->value,
+            'payment_status' => PaymentStatusEnum::DUE->value,
+            'is_verified' => false,
+            'is_active' => true,
         ]);
 
         if ($usuario) {
-            
-            $this->emailVerificationService->sendEmailVerification($usuario);
+            $this->emailVerificationService->enviarVerificacaoEmail($usuario);
 
-            return 'Cadastro realizado com sucesso. Verifique seu e-mail para continuar.';
+            $token = Auth::attempt($data);
+            return $token;
         }
 
         throw new AuthException(
             'Erro ao cadastrar usuário! Por favor, verifique as informações fornecidas e tente novamente.',
             Response::HTTP_BAD_REQUEST
         );
+    }
+
+    public function enviarEmailVerificacao(object $data): void
+    {
+        $usuario = User::getUsuarioPorEmail($data->email);
+        $this->emailVerificationService->enviarVerificacaoEmail($usuario);
     }
 }

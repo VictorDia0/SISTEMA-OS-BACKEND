@@ -6,7 +6,7 @@ use Illuminate\Http\Response;
 
 class ResponseService
 {
-    public static function success($data, string $message = null, int $code = 200)
+    public static function success($data, ?string $message = null, int $code = 200)
     {
         return response()->json(
             [
@@ -19,7 +19,7 @@ class ResponseService
         );
     }
 
-    public static function exception(\Throwable $exception, int $code = null, string $message = null)
+    public static function exception(\Throwable $exception, ?int $code = null, ?string $message = null)
     {
         return response()->json(
             [

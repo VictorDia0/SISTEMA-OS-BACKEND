@@ -6,7 +6,6 @@ use App\Exceptions\AuthException;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Http\Response;
 
 class RefreshToken extends Model
@@ -14,6 +13,7 @@ class RefreshToken extends Model
     use HasFactory;
 
     protected $table = 'refresh_tokens';
+
     protected $fillable = ['user_id', 'token', 'device', 'expires_at', 'ip_address', 'user_agent'];
 
     public function user()
@@ -29,7 +29,7 @@ class RefreshToken extends Model
         return max($ttl, 0);
     }
 
-    public static function make(User $user, string $device, int $ttl = null): array
+    public static function make(User $user, string $device, ?int $ttl = null): array
     {
         $ttl = $ttl ?? config('jwt.refresh_ttl', env('JWT_REFRESH_TTL'));
 
@@ -84,9 +84,7 @@ class RefreshToken extends Model
 
     public static function logout(User $user, string $device): void
     {
-        self::where('user_id', $user->id)
-            ->where('device', $device)
-            ->delete();
+        self::where('user_id', $user->id)->where('device', $device)->delete();
     }
 
     public static function gerarToken(): string

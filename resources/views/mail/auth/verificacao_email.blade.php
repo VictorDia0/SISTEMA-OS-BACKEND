@@ -10,7 +10,7 @@
                 Verificar email
             </a>
         </div>
-        <p style="font-size: 8px; text-align: center;">Se o botão acima não funcionar, copie e cole o link abaixo no seu navegador: <a href="{{$url}}">{{$url}}</a></p>
+        <p style="font-size: 10px; text-align: center;">Se o botão acima não funcionar, copie e cole o link abaixo no seu navegador: <a href="{{$url}}">{{$url}}</a></p>
         <p>Se você não se cadastrou no nosso sistema, por favor ignore este email.</p>
         <br>
         <p>Atenciosamente,</p>

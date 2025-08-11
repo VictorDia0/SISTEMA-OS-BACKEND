@@ -13,20 +13,23 @@ Route::group(['prefix' => 'auth'], function () {
         Route::post('/logout', 'logout')->middleware('jwt.auth');
         Route::get('/me', 'getDadosUsuarioAutenticado')->middleware('jwt.auth');
         Route::post('/register', 'register');
+        Route::post('/verify', 'enviarEmailVerificacao');
     });
 });
 
 Route::group(['prefix' => 'users', 'middleware' => 'jwt.verify'], function () {
     Route::controller(UserController::class)->group(function () {
-        Route::get('/', 'index')->can('getAllUsers', User::class);
+        Route::get('/', 'buscarTodosUsuarios')->can('getAllUsers', User::class);
+        Route::get('/{id}', 'buscarUsuarioPorId')->can('getUserById', User::class);
+
         Route::get('/ordens', 'getAllOrdersByUser');
     });
+});
 
-    Route::group(['prefix' => 'clients'], function () {
-        Route::controller(ClientController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::get('/{id}', 'show');
-        });
+Route::group(['prefix' => 'clients'], function () {
+    Route::controller(ClientController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('/{id}', 'show');
     });
 });
 

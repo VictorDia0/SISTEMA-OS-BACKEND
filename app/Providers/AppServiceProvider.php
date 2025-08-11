@@ -21,8 +21,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(IAuthService::class, AuthService::class);
         $this->app->bind(IUserService::class, UserService::class);
-         $this->app->bind(IVerificacaoEmailService::class, VerificacaoEmailService::class);
-         $this->app->bind(IVerificacaoEmailStrategy::class, VerificacaoEmailStrategy::class);
+        $this->app->bind(IVerificacaoEmailService::class, VerificacaoEmailService::class);
+        $this->app->bind(IVerificacaoEmailStrategy::class, VerificacaoEmailStrategy::class);
     }
 
     /**

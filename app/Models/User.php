@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\AccountStatusEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PlanEnum;
+use App\Enums\RoleEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -17,6 +18,7 @@ class User extends Authenticatable implements JWTSubject
     use HasApiTokens, HasFactory, Notifiable;
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected static function boot()
@@ -25,7 +27,7 @@ class User extends Authenticatable implements JWTSubject
 
         static::creating(
             fn($user) => empty($user->{$user->getKeyName()})
-                ? $user->{$user->getKeyName()} = Str::uuid()->toString()
+                ? ($user->{$user->getKeyName()} = Str::uuid()->toString())
                 : null
         );
     }
@@ -62,6 +64,32 @@ class User extends Authenticatable implements JWTSubject
         ];
     }
 
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class);
+    }
+
+    public function permissions()
+    {
+        return $this->hasManyThrough(Permission::class, Role::class, 'id', 'id', 'id', 'id')
+            ->withPivot('role_id', 'permission_id');
+    }
+    public function hasRole($roleKey)
+    {
+        return $this->roles->contains('key', $roleKey);
+    }
+
+    public function hasPermission($permissionName)
+    {
+        return $this->permissions()->contains('name', $permissionName);
+    }
+
+
+    public static function getUserByIdOrFail(string $id): User
+    {
+        return static::findOrFail($id);
+    }
+
     public function clients()
     {
         return $this->hasMany(Client::class);
@@ -70,6 +98,7 @@ class User extends Authenticatable implements JWTSubject
     public function markEmailVerified(): bool
     {
         $this->email_verified_at = now();
+
         return $this->save();
     }
 
@@ -77,7 +106,6 @@ class User extends Authenticatable implements JWTSubject
     {
         return (bool) !is_null($this->email_verified_at);
     }
-
 
     public function getJWTIdentifier()
     {
@@ -88,17 +116,23 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
-
-    public static function getUserByEmail(string $email): User|null
+    public static function marcarEmailComoVerificado(string $email): User
+    {
+        $user = self::getUsuarioPorEmail($email);
+        $user->markEmailAsVerified();
+        return $user;
+    }
+    public static function getUsuarioPorEmail(string $email): ?User
     {
         return self::where('email', $email)->first();
     }
 
     public function generateVerificationCode(int $length = 6): string
     {
-        $code = str_pad((string) rand(0, (10 ** $length) - 1), $length, '0', STR_PAD_LEFT);
+        $code = str_pad((string) rand(0, 10 ** $length - 1), $length, '0', STR_PAD_LEFT);
         $this->verification_code = $code;
         $this->save();
+
         return $code;
     }
 }

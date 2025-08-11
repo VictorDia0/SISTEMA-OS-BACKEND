@@ -2,14 +2,13 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use App\Models\User;
-use App\Enums\PlanEnum;
 use App\Enums\AccountStatusEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PlanEnum;
 use App\Enums\RoleEnum;
+use App\Models\User;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
@@ -31,7 +30,7 @@ class UserSeeder extends Seeder
             'plan_start_date' => now(),
             'plan_end_date' => now()->addYear(),
             'remember_token' => Str::random(10),
-            'role' => RoleEnum::MASTER,
+            'role' => RoleEnum::ADMIN,
         ]);
     }
 }

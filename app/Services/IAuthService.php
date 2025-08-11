@@ -7,5 +7,6 @@ interface IAuthService
     public function login(array $credenciais, string $dispositivo): array;
     public function refresh(string $token, string $dispositivo): array;
     public function logout(): void;
-    public function register(array $data): string;
+    public function registrarUsuario(array $data): string;
+    public function enviarEmailVerificacao(object $data): void;
 }

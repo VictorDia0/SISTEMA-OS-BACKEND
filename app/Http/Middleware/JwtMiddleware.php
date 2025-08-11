@@ -25,6 +25,7 @@ class JwtMiddleware
                 return ResponseService::exception($e, 401, 'Token não encontrado.');
             }
         }
+
         return $next($request);
     }
 }

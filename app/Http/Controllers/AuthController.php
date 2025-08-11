@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\AuthException;
+use App\Http\Requests\API\VerificarEmailRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\AutenticatedUserResource;
@@ -38,10 +39,7 @@ class AuthController extends Controller
 
         $origin = $request->header('Origin') ?? $request->header('Referer');
         if ($origin && !str_starts_with($origin, config('app.url'))) {
-            return ResponseService::error(
-                message: 'Requisição de origem inválida.',
-                code: Response::HTTP_FORBIDDEN
-            );
+            return ResponseService::error(message: 'Requisição de origem inválida.', code: Response::HTTP_FORBIDDEN);
         }
 
         $user = $this->userService->getUserByEmail($email);
@@ -53,9 +51,7 @@ class AuthController extends Controller
             );
         }
 
-
         $tokens = $this->authService->login($credenciais, $request->header('User-Agent'));
-
 
         return ResponseService::success(
             new AutenticatedUserResource(JWTAuth::user(), $tokens['access_token']),
@@ -85,10 +81,7 @@ class AuthController extends Controller
     public function logout(Request $request): JsonResponse
     {
         if (!JWTAuth::check()) {
-            return ResponseService::error(
-                message: 'Nenhum usuario autenticado',
-                code: Response::HTTP_UNAUTHORIZED
-            );
+            return ResponseService::error(message: 'Nenhum usuario autenticado', code: Response::HTTP_UNAUTHORIZED);
         }
 
         $this->authService->logout($request->header('User-Agent'), $request->ip());
@@ -104,24 +97,29 @@ class AuthController extends Controller
     {
         try {
             $data = $request->validated();
-            $message = $this->authService->register($data);
 
-            return ResponseService::success(
-                data: [],
-                message: $message,
-                code: Response::HTTP_CREATED
-            );
+            $message = $this->authService->registrarUsuario($data);
+
+            return ResponseService::success(data: [], message: $message, code: Response::HTTP_CREATED);
         } catch (AuthException $e) {
-            return ResponseService::error(
-                message: $e->getMessage(),
-                code: $e->getCode()
-            );
+            return ResponseService::error(message: $e->getMessage(), code: $e->getCode());
         }
+    }
+
+    public function enviarEmailVerificacao(VerificarEmailRequest $request): JsonResponse
+    {
+        $data = (object) $request->validated();
+        
+        $this->authService->enviarEmailVerificacao($data);
+        return ResponseService::success(
+            data: [],
+            message: 'Email de verificação enviado com sucesso!',
+            code: Response::HTTP_OK
+        );
     }
 
     public function getDadosUsuarioAutenticado(): JsonResponse
     {
-
         return ResponseService::success(
             new AutenticatedUserResource(JWTAuth::user(), JWTAuth::getToken()),
             'Dados do usuário autenticado retornados com sucesso.',

@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Exceptions\UserNotFoundException;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Collection as SupportCollection;
 
 class UserService implements IUserService
 {
@@ -16,6 +15,17 @@ class UserService implements IUserService
         return User::all();
     }
 
+    public function getUserById(string $id): User
+    {
+        $user = User::getUserByIdOrFail($id);
+
+        if (!$user) {
+            throw new UserNotFoundException();
+        }
+
+        return $user;
+    }
+
     public function getUserByEmail(string $email): User
     {
         $user = User::getUserByEmail($email);
@@ -23,6 +33,7 @@ class UserService implements IUserService
         if (!$user) {
             throw new UserNotFoundException();
         }
+
         return $user;
     }
 }

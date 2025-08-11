@@ -22,6 +22,7 @@ class UserCollection extends ResourceCollection
                 $usuario = UserResource::make($user)->toArray($request);
                 $usuario['status'] = $user->hasVerifiedEmail() ? 'Ativo' : 'Pendente';
                 $usuario['role'] = $this->getRole($user);
+
                 return $usuario;
             })
             ->toArray();

@@ -18,6 +18,7 @@ class UserPolicy
         if ($user->hasPermissionTo(PermissionEnum::VIEW_ADMIN)) {
             $hasPermission = Response::allow();
         }
+
         return $hasPermission;
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,6 +12,7 @@ class PaymentController extends Controller
     public function index()
     {
         $payments = Auth::user()->payments;
+
         return response()->json($payments);
     }
 

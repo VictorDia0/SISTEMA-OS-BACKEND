@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 class Employee extends Model
 {
     public $incrementing = false; // Desativa auto-incremento
+
     protected $keyType = 'string'; // Define o tipo da chave primária como string
 
     protected static function boot()
@@ -31,7 +32,6 @@ class Employee extends Model
      *
      * @var array<int, string>
      */
-
     protected $fillable = [
         'name',
         'surname',

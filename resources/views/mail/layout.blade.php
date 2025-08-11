@@ -117,31 +117,26 @@
 
 <body>
     <div class="container">
-        <!-- Header with Image -->
         <div class="header">
             @yield('banner')
         </div>
 
-        <!-- Content aligned to left -->
         <div class="content">
             @yield('mensagem')
-            <!-- Signature -->
-
         </div>
 
-        <!-- Footer with images -->
         <div class="footer" style="text-align: center; max-height: 60px; font-size: 7px; padding: 7px;">
             <div>
             <div class="logo-container" style="margin-bottom: 0px;">
             <a href="https://ifnmg.edu.br/almenara">
-            <img src="{{ asset('/imagens/logoIFNMG.png') }}" alt="IFNMG Logo" style="margin: 0px;">
+            <h3>Teste</h3>
             </a>
             <a href="https://eventos.ifnmg.edu.br">
-            <img src="{{ asset('/imagens/logo-pharus.png') }}" alt="Pharus Logo" style="margin: 0px;">
+            <h3>Teste</h3>
             </a>
             </div>
             </div>
-            <p>Copyright © 2024 IFNMG. Todos direitos reservados.</p>
+            <p>Copyright © 2025 Ordem de Serviço. Todos direitos reservados.</p>
         </div>
 
     </div>

@@ -4,8 +4,9 @@ namespace App\Enums;
 
 enum PlanEnum: string
 {
-    case FREE = 'gratis';
-    case BASIC = 'basico';
-    case MEDIUM = 'medio';
+    case FREE = 'free';
+    case BASIC = 'basic';
+    case MEDIUM = 'medium';
     case PRO = 'pro';
+    case ENTERPRISE = 'enterprise';
 }

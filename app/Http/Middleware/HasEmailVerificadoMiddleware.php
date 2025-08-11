@@ -32,6 +32,7 @@ class HasEmailVerificadoMiddleware
                 );
             }
         }
+
         return $next($request);
     }
 }

@@ -20,6 +20,7 @@ class ClientCollection extends ResourceCollection
         return $this->collection
             ->map(function (Client $client) use ($request) {
                 $cliente = ClientResource::make($client)->toArray($request);
+
                 return $cliente;
             })
             ->toArray();

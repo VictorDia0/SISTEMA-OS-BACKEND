@@ -6,5 +6,5 @@ use App\Models\User;
 
 interface IVerificacaoEmailService
 {
-    public function sendEmailVerification(User $user): void;
+    public function enviarVerificacaoEmail(User $user): void;
 }
