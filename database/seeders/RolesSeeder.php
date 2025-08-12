@@ -11,20 +11,20 @@ class RolesSeeder extends Seeder
     public function run()
     {
         $roles = [
-            ['key' => RoleEnum::ADMIN->value, 'name' => 'Administrador'],
-            ['key' => RoleEnum::USER->value, 'name' => 'Usuário Padrão'],
-            ['key' => RoleEnum::MANAGER->value, 'name' => 'Gerente'],
-            ['key' => RoleEnum::SUPPORT->value, 'name' => 'Suporte'],
-            ['key' => RoleEnum::FINANCE->value, 'name' => 'Financeiro'],
-            ['key' => RoleEnum::TECHNICIAN->value, 'name' => 'Técnico'],
-            ['key' => RoleEnum::CLIENT->value, 'name' => 'Cliente'],
+             RoleEnum::ADMIN->value,
+             RoleEnum::USER->value,
+             RoleEnum::MANAGER->value,
+             RoleEnum::SUPPORT->value,
+             RoleEnum::FINANCE->value,
+             RoleEnum::TECHNICIAN->value,
+             RoleEnum::CLIENT->value,
         ];
 
-        foreach ($roles as $role) {
-            Role::firstOrCreate(
-                ['key' => $role['key']],
-                ['name' => $role['name']]
-            );
+        foreach ($roles as $roleName) {
+            Role::firstOrCreate([
+                'name' => $roleName,
+                'guard_name' => 'web'
+            ]);
         }
     }
 }

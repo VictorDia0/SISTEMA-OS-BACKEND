@@ -3,59 +3,43 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\AuthException;
-use App\Http\Requests\API\VerificarEmailRequest;
+use App\Http\Requests\VerificarEmailRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\AutenticatedUserResource;
+use App\Models\RefreshToken;
 use App\Services\IAuthService;
 use App\Services\IUserService;
 use App\Services\ResponseService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Cookie;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
-    private int $maxAttempts = 5;
-
     public function __construct(private IAuthService $authService, private IUserService $userService) {}
 
     public function login(LoginRequest $request): JsonResponse
     {
         $credenciais = $request->validated();
-        $email = $credenciais['email'];
-        $ip = $request->ip();
 
-        $key = "login_attemps:{$email}:{$ip}";
-        if (Cache::has($key) && Cache::get($key) >= $this->maxAttempts) {
-            return ResponseService::error(
-                message: 'Muitas tentativas de login. Tente novamente mais tarde',
-                code: Response::HTTP_TOO_MANY_REQUESTS
-            );
-        }
+        $device = $request->header('User-Agent');
 
-        $origin = $request->header('Origin') ?? $request->header('Referer');
-        if ($origin && !str_starts_with($origin, config('app.url'))) {
-            return ResponseService::error(message: 'Requisição de origem inválida.', code: Response::HTTP_FORBIDDEN);
-        }
+        $tokens = $this->authService->login($credenciais, $device);
 
-        $user = $this->userService->getUserByEmail($email);
-
-        if (!$user || !$user->is_active) {
-            return ResponseService::error(
-                message: 'Usuário inativo ou não encontrado.',
-                code: Response::HTTP_UNAUTHORIZED
-            );
-        }
-
-        $tokens = $this->authService->login($credenciais, $request->header('User-Agent'));
+        $data = AutenticatedUserResource::make(
+            Auth::user(),
+            $tokens['access_token']
+        )->toArray($request);
 
         return ResponseService::success(
-            new AutenticatedUserResource(JWTAuth::user(), $tokens['access_token']),
-            'Usuario autenticado com sucesso'
+            array_merge(
+                $data,
+                ['message' => 'Usuário autenticado com sucesso']
+            )
         )->cookie($this->makeRefreshCookie($tokens['refresh_token']));
     }
 
@@ -80,17 +64,13 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        if (!JWTAuth::check()) {
-            return ResponseService::error(message: 'Nenhum usuario autenticado', code: Response::HTTP_UNAUTHORIZED);
-        }
-
-        $this->authService->logout($request->header('User-Agent'), $request->ip());
+        $this->authService->logout();
 
         return ResponseService::success(
             data: [],
-            message: 'Logout efetuado com sucesso',
+            message: 'Logout realizado com sucesso!',
             code: Response::HTTP_OK
-        )->withoutCookie($this->makeEmptyRefreshCookie());
+        )->cookie($this->makeRefreshCookie());
     }
 
     public function register(RegisterRequest $request): JsonResponse
@@ -109,7 +89,7 @@ class AuthController extends Controller
     public function enviarEmailVerificacao(VerificarEmailRequest $request): JsonResponse
     {
         $data = (object) $request->validated();
-        
+
         $this->authService->enviarEmailVerificacao($data);
         return ResponseService::success(
             data: [],
@@ -118,42 +98,26 @@ class AuthController extends Controller
         );
     }
 
+    public function verificarEmailUsuario(VerificarEmailRequest $request): RedirectResponse
+    {
+        $data = (object) $request->validated();
+        $this->authService->verificarEmail($data);
+        return redirect()->to(env('FRONTEND_URL'));
+    }
+
     public function getDadosUsuarioAutenticado(): JsonResponse
     {
         return ResponseService::success(
-            new AutenticatedUserResource(JWTAuth::user(), JWTAuth::getToken()),
+            new AutenticatedUserResource(Auth::user(), Auth::getToken()),
             'Dados do usuário autenticado retornados com sucesso.',
             Response::HTTP_OK
         );
     }
 
-    private function makeRefreshCookie(string $refreshToken): Cookie
+    private function makeRefreshCookie(RefreshToken $refreshToken = null, string $value = '', int $ttl = 60): Cookie
     {
-        return Cookie::create(
-            'refresh_token',
-            $refreshToken,
-            60 * 24 * 7,
-            '/',
-            config('session.domain', 'localhost'),
-            true,
-            true,
-            false,
-            'Strict'
-        );
-    }
-
-    private function makeEmptyRefreshCookie(): Cookie
-    {
-        return Cookie::create(
-            'refresh_token',
-            '',
-            -1,
-            '/',
-            config('session.domain', 'localhost'),
-            true,
-            true,
-            false,
-            'Strict'
-        );
+        $token = !is_null($refreshToken) ? $refreshToken->token : $value;
+        $ttl = !is_null(value: $refreshToken) ? $refreshToken->getTTL() : $ttl;
+        return Cookie::create('refresh_token', $token, time() + $ttl, '/', null, false, true, false);
     }
 }

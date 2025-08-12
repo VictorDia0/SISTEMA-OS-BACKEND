@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Enums\AccountStatusEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PlanEnum;
-use App\Enums\RoleEnum;
+use App\Models\Traits\HasRolesWithContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -15,7 +15,10 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens;
+    use HasFactory;
+    use Notifiable;
+    use HasRolesWithContext;
 
     public $incrementing = false;
 
@@ -42,6 +45,7 @@ class User extends Authenticatable implements JWTSubject
         'plan',
         'account_status',
         'payment_status',
+        'email_verified_at',
         'verification_code',
         'is_verified',
         'is_active',

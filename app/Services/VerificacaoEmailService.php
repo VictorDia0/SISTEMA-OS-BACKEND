@@ -12,9 +12,7 @@ use App\Strategies\Emails\IVerificacaoEmailStrategy;
 use Carbon\Carbon;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
-
 
 class VerificacaoEmailService implements IVerificacaoEmailService
 {
@@ -28,6 +26,17 @@ class VerificacaoEmailService implements IVerificacaoEmailService
         } catch (\Throwable $th) {
             throw new EmailVerificationException('Erro interno ao enviar email de verificação!');
         }
+    }
+
+    public function verificarEmail(string $email, string $token): bool
+    {
+        $verificacao = VerificacaoEmail::verificacao($email, $token);
+        $this->validarVerificacao($verificacao);
+
+        $usuario = User::marcarEmailComoVerificado($email);
+        $usuario->assignRole(RoleEnum::USER);
+        $verificacao->delete();
+        return true;
     }
 
     public function gerarLinkDeVerificacao(string $email): string
@@ -48,18 +57,6 @@ class VerificacaoEmailService implements IVerificacaoEmailService
         }
     }
 
-    public function verificarEmail(string $email, string $token): bool
-    {
-        $verificacao = VerificacaoEmail::verificacao($email, $token);
-        $this->validarVerificacao($verificacao);
-
-        $usuario = User::marcarEmailComoVerificado($email);
-        $usuario->assignRole(RoleEnum::USER);
-        $verificacao->delete();
-
-        return true;
-    }
-
     public static function gerarVerificacao(string $email, $expired_at = null): VerificacaoEmail
     {
         $verificacao = VerificacaoEmail::getVerificacaoPorEmail($email);
@@ -71,7 +68,7 @@ class VerificacaoEmailService implements IVerificacaoEmailService
         return new VerificacaoEmail(email: $email, expired_at: $expired_at);
     }
 
-    public function validarVerificacao(?VerificacaoEmail $verificacao): bool
+    public function validarVerificacao(VerificacaoEmail|null $verificacao): bool
     {
         if (!$verificacao) {
             throw new AuthException('Token de verificação inexistente!', Response::HTTP_NOT_FOUND);

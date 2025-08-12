@@ -18,7 +18,7 @@ class AuthService implements IAuthService
 
     public function login(array $credenciais, string $dispositivo): array
     {
-        $token = JWTAuth::attempt($credenciais);
+        $token = Auth::attempt($credenciais);
 
         if (!$token) {
             throw new AuthException('Usuario ou senha inválidos', Response::HTTP_UNAUTHORIZED);
@@ -81,8 +81,11 @@ class AuthService implements IAuthService
     public function logout(): void
     {
         try {
-            RefreshToken::logout(JWTAuth::user(), request()->header('User-Agent'));
-            JWTAuth::logout();
+            RefreshToken::logout(
+                Auth::user(),
+                request()->header('User-Agent')
+            );
+            Auth::logout();
         } catch (\Exception $e) {
             throw new AuthException('Erro interno ao efetuar logout!', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -118,5 +121,10 @@ class AuthService implements IAuthService
     {
         $usuario = User::getUsuarioPorEmail($data->email);
         $this->emailVerificationService->enviarVerificacaoEmail($usuario);
+    }
+
+    public function verificarEmail(object $data): void
+    {
+        $this->emailVerificationService->verificarEmail($data->email, $data->token);
     }
 }

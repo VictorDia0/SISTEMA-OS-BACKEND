@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Enums\RoleEnum;
 
 class Role extends Model
@@ -14,6 +13,7 @@ class Role extends Model
     protected $fillable = [
         'key',
         'name',
+        'guard_name',
         'description'
     ];
 
