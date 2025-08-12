@@ -6,19 +6,30 @@ use App\Http\Controllers\UserController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('auth')->controller(AuthController::class)->group(function () {
-    Route::post('/login', 'login');
-    Route::post('/refresh', 'refresh');
-    Route::post('/logout', 'logout')->middleware('jwt.auth');
-    Route::get('/me', 'getDadosUsuarioAutenticado')->middleware('jwt.auth');
-    Route::post('/register', 'register');
+Route::prefix('auth')->controller(AuthController::class)
+    ->group(function () {
+        // =====================
+        // AUTHENTICATION
+        // =====================
+        Route::post('/login', 'login');
+        Route::post('/register', 'register');
+        Route::post('/logout', 'logout')->middleware('jwt.auth');
 
-    // =====================
-    // EMAIL VERIFICATION
-    // =====================
-    Route::get('/verify', 'verificarEmailUsuario');
-    Route::post('/verify/resend', 'enviarEmailVerificacao');
-});
+        // =====================
+        // PASSWORD RECOVERY
+        // =====================
+        Route::put('/password/recovery', 'redefinirSenha');
+        Route::post('/password/recovery', 'enviarEmailRedefinirSenha');
+
+        Route::post('/refresh', 'refresh');
+        Route::get('/me', 'getDadosUsuarioAutenticado')->middleware('jwt.auth');
+
+        // =====================
+        // EMAIL VERIFICATION
+        // =====================
+        Route::get('/verify', 'verificarEmailUsuario');
+        Route::post('/verify/resend', 'enviarEmailVerificacao');
+    });
 
 Route::prefix('users')->middleware('jwt.auth')->controller(UserController::class)->group(function () {
     Route::get('/', 'buscarTodosUsuarios')->can('getAllUsers', User::class);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\AuthException;
+use App\Http\Requests\API\RedefinirSenhaRequest;
 use App\Http\Requests\VerificarEmailRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
@@ -103,6 +104,23 @@ class AuthController extends Controller
         $data = (object) $request->validated();
         $this->authService->verificarEmail($data);
         return redirect()->to(env('FRONTEND_URL'));
+    }
+
+    public function redefinirSenha(RedefinirSenhaRequest $request): JsonResponse
+    {
+        $data = (object) $request->validated();
+        $this->authService->redefinirSenha($data);
+        return ResponseService::success([
+            'message' => 'Senha redefinida com sucesso!',
+            'code' => Response::HTTP_OK
+        ]);
+    }
+
+    public function enviarEmailRedefinirSenha(RedefinirSenhaRequest $request): JsonResponse
+    {
+        $data = (object) $request->validated();
+        $this->userService->enviarEmailRedefinirSenha($data);
+        return ResponseService::success([], 'Email de redefinição de senha enviado com sucesso.', Response::HTTP_OK);
     }
 
     public function getDadosUsuarioAutenticado(): JsonResponse

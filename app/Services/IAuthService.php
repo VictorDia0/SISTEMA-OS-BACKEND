@@ -10,4 +10,5 @@ interface IAuthService
     public function registrarUsuario(array $data): string;
     public function enviarEmailVerificacao(object $data): void;
     public function verificarEmail(object $data): void;
+    public function redefinirSenha(object $data): void;
 }

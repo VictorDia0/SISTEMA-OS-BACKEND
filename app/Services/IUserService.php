@@ -10,4 +10,5 @@ interface IUserService
     public function getAllUsers(): Collection;
     public function getUserById(string $id): User;
     public function getUserByEmail(string $email): User;
+     public function enviarEmailRedefinirSenha(object $data): void;
 }

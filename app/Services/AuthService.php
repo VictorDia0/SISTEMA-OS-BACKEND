@@ -8,8 +8,13 @@ use App\Enums\PlanEnum;
 use App\Exceptions\AuthException;
 use App\Models\RefreshToken;
 use App\Models\User;
+use App\Models\VerificacaoEmail;
+use App\Notifications\AlertaAlteracaoSenhaEmailNotification;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthService implements IAuthService
@@ -126,5 +131,34 @@ class AuthService implements IAuthService
     public function verificarEmail(object $data): void
     {
         $this->emailVerificationService->verificarEmail($data->email, $data->token);
+    }
+
+    public function redefinirSenha(object $data): void
+    {
+        try {
+            DB::beginTransaction();
+
+            $verificacao = VerificacaoEmail::verificacao($data->email, $data->token);
+
+            $this->emailVerificationService->validarVerificacao($verificacao);
+            $verificacao->delete();
+
+            $usuario = User::where('email', $data->email)->firstOrFail();
+
+            $usuario->password = Hash::make($data->password);
+            $usuario->markEmailAsVerified();
+
+            $usuario->save();
+
+            Notification::send($usuario, new AlertaAlteracaoSenhaEmailNotification());
+
+            DB::commit();
+        } catch (AuthException $e) {
+            DB::rollBack();
+            throw $e;
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            throw new AuthException('Erro interno ao redefinir senha! Por favor tente novamente mais tarde.');
+        }
     }
 }
